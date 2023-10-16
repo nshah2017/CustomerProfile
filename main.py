@@ -1,8 +1,7 @@
 import openai
 from io import StringIO
 import streamlit as st
-import numpy as np
-import pandas as pd
+from streamlit_chat import message
 
 
 def read_text_file(file_path):
@@ -30,9 +29,13 @@ def generate_customer_profile(api_key, system_text1, user_text1):
         ])
     return resp_message["choices"][0]["message"]["content"]
 
-
+tip_text = ""
 with st.sidebar:
     textfile = st.file_uploader("Upload TIP Sheet file in pdf only", type=None, accept_multiple_files=False)
+    if textfile:
+        stringio = StringIO(textfile.getvalue().decode("utf-8"))
+        tip_text = stringio.read()
+
     system_text2 = st.text_area("Enter System Prompt",
                                 value="Consider you are an account specialist for the absence and disability "
                                       "insurance company. You are working on important accounts. For each account you have created document "
@@ -68,17 +71,37 @@ with tab1:
     st.header("Customer Profile")
     if st.button("Generate Customer Profile"):
         with st.spinner("processing..."):
-            stringio = StringIO(textfile.getvalue().decode("utf-8"))
-            tip_text = stringio.read()
             system_text2 = system_text2 + " " + tip_text
             response_message = generate_customer_profile(openai_api_key, system_text2, user_text)
             st.write(response_message)
 with tab2:
     st.header("Chat with TIP Sheet")
-    if st.button("Chat with TIP Sheet"):
-        with st.spinner("processing..."):
-            stringio = StringIO(textfile.getvalue().decode("utf-8"))
-            tip_text = stringio.read()
-            system_text2 = system_text2 + " " + tip_text
-            response_message = generate_customer_profile(openai_api_key, system_text2, user_text)
-            st.write(response_message)
+    if 'generated' not in st.session_state:
+        st.session_state['generated'] = []
+
+    if 'past' not in st.session_state:
+        st.session_state['past'] = []
+    if st.button('Clear Chat'):
+        st.session_state.past = []
+        st.session_state.generated = []
+        if input not in st.session_state:
+            st.session_state.input = ""
+        for i in range(len(st.session_state['generated']) - 1, -1, -1):
+            message(st.session_state["generated"][i], key=str(i))
+            message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
+
+    def get_text():
+        input_text = st.text_input("", key="input")
+        return input_text
+
+
+    user_input = get_text()
+    system_text2 = system_text2 + " " + tip_text
+    if user_input:
+        output = generate_customer_profile(openai_api_key, system_text2, user_input)
+        st.session_state.past.append(user_input)
+        st.session_state.generated.append(output)
+    if st.session_state['generated']:
+        for i in range(len(st.session_state['generated']) - 1, -1, -1):
+            message(st.session_state["generated"][i], key=str(i))
+            message(st.session_state['past'][i], is_user=True, key=str(i) + '_user')
