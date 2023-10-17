@@ -17,7 +17,7 @@ def generate_customer_profile(api_key, system_text1, user_text1):
     openai.api_key = api_key
     resp_message = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-16k",
-        temperature=0.6,
+        temperature=0.5,
         max_tokens=8000,
         messages=[
             {"role": "system",
@@ -29,13 +29,19 @@ def generate_customer_profile(api_key, system_text1, user_text1):
         ])
     return resp_message["choices"][0]["message"]["content"]
 
-tip_text = ""
-with st.sidebar:
-    textfile = st.file_uploader("Upload TIP Sheet file in pdf only", type=None, accept_multiple_files=False)
-    if textfile:
-        stringio = StringIO(textfile.getvalue().decode("utf-8"))
-        tip_text = stringio.read()
 
+tip_text = ""
+tip_text_all = ""
+file_contents = []
+with st.sidebar:
+    textfile = st.file_uploader("Upload TIP Sheet file", type=None, accept_multiple_files=True)
+    if textfile:
+        for file in textfile:
+            stringio = StringIO(file.getvalue().decode("utf-8"))
+            tip_text = stringio.read()
+            tip_text_all = tip_text_all + '\n' + tip_text
+    else:
+        st.warning("Please upload one or more text files.")
     system_text2 = st.text_area("Enter System Prompt",
                                 value="Consider you are an account specialist for the absence and disability "
                                       "insurance company. You are working on important accounts. For each account you have created document "
@@ -71,7 +77,7 @@ with tab1:
     st.header("Customer Profile")
     if st.button("Generate Customer Profile"):
         with st.spinner("processing..."):
-            system_text2 = system_text2 + " " + tip_text
+            system_text2 = system_text2 + " " + tip_text_all
             response_message = generate_customer_profile(openai_api_key, system_text2, user_text)
             st.write(response_message)
 with tab2:
@@ -96,7 +102,7 @@ with tab2:
 
 
     user_input = get_text()
-    system_text2 = system_text2 + " " + tip_text
+    system_text2 = system_text2 + " " + tip_text_all
     if user_input:
         output = generate_customer_profile(openai_api_key, system_text2, user_input)
         st.session_state.past.append(user_input)
