@@ -18,7 +18,7 @@ def generate_customer_profile(api_key, system_text1, user_text1):
     resp_message = openai.ChatCompletion.create(
         model="gpt-3.5-turbo-16k",
         temperature=0.5,
-        max_tokens=8000,
+        max_tokens=4000,
         messages=[
             {"role": "system",
              "content": system_text1
