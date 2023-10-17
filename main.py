@@ -62,7 +62,7 @@ with st.sidebar:
                 tip_text_all = tip_text_all + '\n' + tip_text
             else:
                 st.warning("Please upload one or more text/csv files.")
-    print(tip_text_all)
+    #print(tip_text_all)
     system_text2 = st.text_area("Enter System Prompt",
                                 value= "Consider you are an account service specialist for the absence and disability group benefit administrator. "
                                         "The customers of the company are employers with many employees. The employees are grouped into buckets called 'Structure'. "
